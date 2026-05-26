@@ -209,7 +209,7 @@ Request → requireAuth (req.user) → requireOrg (X-Org-Id header)
 
 ---
 
-# NEXT: Phases 11
+# All phases complete
 
 ---
 
@@ -363,16 +363,13 @@ GitHub → CI (lint + test + build) → Artifact Registry → Deploy to Cloud Ru
 
 ## Phase 11 — Documentation
 
-### Goal
+### Status: ✅ Complete
 
-Make engineering depth visible for interview discussion.
+### What was built
 
-### Tasks
-
-- `README.md` — architecture, tenant isolation, RLS decision, tradeoffs
-- `DESIGN.md` — isolation strategies, why RLS, operational tradeoffs, scaling
-- `SECURITY.md` — threat model: token theft, tenant leaks, privilege escalation, replay
-- OpenAPI / Swagger doc (API endpoints)
+- `README.md` — Project overview, architecture diagram, tech stack, quick start, API reference, project structure, deployment
+- `DESIGN.md` — Architecture deep-dive, two-layer tenant isolation (RLS + service layer), RLS implementation details, auth token design, RBAC matrix, operational features, data model, tradeoffs, scaling
+- `SECURITY.md` — Threat model, 10 attack vectors with mitigations, password policy, audit logging, dependency security, infrastructure security controls
 
 ---
 
@@ -393,8 +390,11 @@ server/
 │   └── pre-commit
 ├── .prettierrc
 ├── AGENTS.md
+├── DESIGN.md
 ├── Dockerfile
 ├── PLAN.md                         ← this file
+├── README.md
+├── SECURITY.md
 ├── cloudbuild.yaml
 ├── docker-compose.yml
 ├── phase-10.md

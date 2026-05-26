@@ -1,0 +1,88 @@
+name: Deploy to Cloud Run
+
+on:
+  push:
+    branches: [main]
+
+env:
+  PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
+  REGION: ${{ vars.GCP_REGION || 'us-central1' }}
+  SERVICE_NAME: multitenant-api
+  REPO: ${{ vars.GCP_REGION || 'us-central1' }}-docker.pkg.dev/${{ vars.GCP_PROJECT_ID }}/multitenant-app
+
+jobs:
+  test-and-build:
+    name: Test & Build
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: server
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+          cache-dependency-path: server/package-lock.json
+
+      - run: npm ci
+      - run: npm run lint
+      - run: npm test
+      - run: npm run build
+
+  deploy:
+    name: Deploy
+    needs: test-and-build
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - uses: google-github-actions/setup-gcloud@v2
+
+      - run: gcloud auth configure-docker "${{ env.REPO }}"
+
+      - name: Build & Push
+        run: |
+          IMAGE_TAG="${{ github.sha }}"
+          docker build -t "${{ env.REPO }}/${{ env.SERVICE_NAME }}:$IMAGE_TAG" server/
+          docker push "${{ env.REPO }}/${{ env.SERVICE_NAME }}:$IMAGE_TAG"
+          echo "IMAGE_TAG=$IMAGE_TAG" >> $GITHUB_ENV
+
+      - name: Deploy to Cloud Run
+        run: |
+          gcloud run deploy "${{ env.SERVICE_NAME }}" \
+            --image="${{ env.REPO }}/${{ env.SERVICE_NAME }}:${{ github.sha }}" \
+            --platform=managed \
+            --region=${{ env.REGION }} \
+            --port=8080 \
+            --cpu=1 \
+            --memory=512Mi \
+            --min-instances=0 \
+            --max-instances=10 \
+            --concurrency=80 \
+            --timeout=300 \
+            --set-env-vars="NODE_ENV=production" \
+            --update-secrets="DATABASE_URL=database-url:latest" \
+            --update-secrets="REDIS_URL=redis-url:latest" \
+            --update-secrets="JWT_ACCESS_SECRET=jwt-access-secret:latest" \
+            --update-secrets="JWT_REFRESH_SECRET=jwt-refresh-secret:latest" \
+            --add-cloudsql-instances="${{ env.PROJECT_ID }}:${{ env.REGION }}:multitenant-db" \
+            --vpc-connector=multitenant-connector \
+            --vpc-egress=private-ranges-only \
+            --allow-unauthenticated \
+            --ingress=all
+
+      - name: Show URL
+        run: |
+          URL=$(gcloud run services describe "${{ env.SERVICE_NAME }}" \
+            --region=${{ env.REGION }} \
+            --format="value(status.url)")
+          echo "Deployed to: $URL"

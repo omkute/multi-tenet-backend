@@ -78,8 +78,8 @@ src/
 | 7 — Audit Logging | ✅ Done |
 | 8 — Operational Features | ✅ Done |
 | 9 — Testing Strategy | ✅ Done |
-| 10 — Deployment | ⏳ Design done, artifacts created |
-| 11 — Documentation | ⏳ |
+| 10 — Deployment | ✅ Done |
+| 11 — Documentation | ✅ Done |
 
 ## GCP Deployment
 
