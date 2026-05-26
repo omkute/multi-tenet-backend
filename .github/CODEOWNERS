@@ -1,0 +1,9 @@
+# Each pattern defines who owns those files
+# Owners are auto-requested for review on PRs
+
+*.ts            @omkute
+src/config/     @omkute
+src/lib/        @omkute
+src/middleware/  @omkute
+docker-compose.yml @omkute
+Dockerfile      @omkute
