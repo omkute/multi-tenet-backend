@@ -1,17 +1,38 @@
 FROM node:22-alpine AS deps
 WORKDIR /app
 COPY package*.json ./
-RUN npm ci --only=production
+
+# Install ALL dependencies (including devDependencies for build)
+RUN npm ci
 
 FROM deps AS builder
-RUN npm ci
-COPY . .
+COPY tsconfig.json ./
+COPY prisma/ ./prisma/
+COPY src/ ./src/
+
+# Generate Prisma client + build TypeScript
+RUN npx prisma generate
 RUN npm run build
 
 FROM node:22-alpine AS runner
 WORKDIR /app
 ENV NODE_ENV=production
-COPY --from=deps /app/node_modules ./node_modules
+
+# Copy production dependencies
+COPY package*.json ./
+RUN npm ci --omit=dev && npm cache clean --force
+
+# Copy built output
 COPY --from=builder /app/dist ./dist
-EXPOSE 3000
-CMD ["node", "dist/server.js"]
+
+# Copy Prisma schema + migrations + generated client
+COPY --from=builder /app/prisma ./prisma
+COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
+COPY --from=builder /app/node_modules/@prisma ./node_modules/@prisma
+
+# Startup script: run migrations then start app
+RUN printf '#!/bin/sh\nset -e\nnpx prisma migrate deploy\nexec node dist/server.js\n' > /start.sh \
+  && chmod +x /start.sh
+
+EXPOSE 8080
+CMD ["/start.sh"]
