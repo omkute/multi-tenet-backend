@@ -29,7 +29,7 @@ export function metricsMiddleware(
 
   res.on("finish", () => {
     const duration = Date.now() - start;
-    const route = req.route?.path ?? req.path;
+    const route = req.route?.path ? req.baseUrl + req.route.path : req.path;
 
     httpRequestCounter.inc({
       method: req.method,

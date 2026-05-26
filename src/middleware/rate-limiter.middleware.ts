@@ -45,8 +45,9 @@ export function bruteForceProtection(
 
   redis
     .get(key)
-    .then((blocked) => {
-      if (blocked) {
+    .then((val: string | null) => {
+      const count = val ? Number(val) : 0;
+      if (count >= BRUTE_MAX_FAILURES) {
         _res.status(429).json({
           error: "Too many attempts. Try again later.",
         });
@@ -93,11 +94,11 @@ function slidingWindow(
     .zadd(key, now, `${now}-${Math.random()}`)
     .pexpire(key, config.windowMs)
     .exec()
-    .then((results) => {
+    .then((results: [Error | null, unknown][] | null) => {
       if (!results) return next();
-      const count = results[1][1] as number;
+      const count = results[1]?.[1] as number | undefined;
 
-      if (count > config.max) {
+      if (count !== undefined && count > config.max) {
         _res.status(429).json({
           error: "Too many requests. Please slow down.",
         });

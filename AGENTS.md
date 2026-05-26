@@ -76,7 +76,7 @@ src/
 | 5 — RBAC Authorization | ✅ Done |
 | 6 — Invite System | ✅ Done |
 | 7 — Audit Logging | ✅ Done |
-| 8 — Operational Features | ⏳ |
+| 8 — Operational Features | ✅ Done |
 | 9 — Testing Strategy | ⏳ |
 | 10 — Deployment | ⏳ |
 | 11 — Documentation | ⏳ |

@@ -4,7 +4,10 @@ import { pingRedis } from "@/lib/redis.js";
 
 const startTime = Date.now();
 
-export const getHealth = async (_req: Request, res: Response): Promise<void> => {
+export const getHealth = async (
+  _req: Request,
+  res: Response,
+): Promise<void> => {
   const dbHealthy = await pingDatabase();
   const redisHealthy = await pingRedis();
   const healthy = dbHealthy && redisHealthy;

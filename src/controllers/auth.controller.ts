@@ -1,7 +1,10 @@
 import type { Request, Response } from "express";
 import * as authService from "../services/auth.service.js";
 import { env } from "../config/env.js";
-import { bruteForceProtection, recordFailedAttempt, clearBruteForce } from "../middleware/rate-limiter.middleware.js";
+import {
+  recordFailedAttempt,
+  clearBruteForce,
+} from "../middleware/rate-limiter.middleware.js";
 
 const REFRESH_COOKIE_OPTIONS = {
   httpOnly: true,
