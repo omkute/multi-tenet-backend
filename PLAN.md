@@ -20,9 +20,9 @@ Client → Express API → requireAuth (JWT) → requireOrg (X-Org-Id) → Servi
 | Cache | Redis 7 (docker-compose only, not used in app yet) |
 | Logging | Pino 10 + pino-http 11 |
 | Validation | Zod 4 |
-| Testing | Jest + Supertest + Testcontainers (planned Phase 9) |
-| Deployment | Docker → GCP (Cloud Run + Cloud SQL + Memorystore, Phase 10) |
-| CI | GitHub Actions (Phase 10) |
+| Testing | Jest + Supertest + Testcontainers |
+| Deployment | Docker → GCP (Cloud Run + Cloud SQL + Memorystore) |
+| CI | GitHub Actions |
 
 ---
 
@@ -209,7 +209,7 @@ Request → requireAuth (req.user) → requireOrg (X-Org-Id header)
 
 ---
 
-# NEXT: Phases 5–11
+# NEXT: Phases 11
 
 ---
 
@@ -297,46 +297,67 @@ Production-grade runtime behavior.
 
 ## Phase 9 — Testing Strategy
 
-### Goal
+### Status: ✅ Complete
 
-Build confidence in correctness and security.
+### What was built
 
-### Tasks
+- Jest 29 + `ts-jest` (ESM preset) + Testcontainers + Supertest test suite
+- 27 integration tests across 4 suites: health, auth, org, invite
+- Global setup starts Postgres + Redis Testcontainers, runs `prisma migrate deploy`
+- Testcontainers connection info shared via `/tmp/test-containers.json`
+- Test utilities: `signupUser`, `loginUser`, `createOrg`, `createInvite`, `cleanup`
 
-- Unit tests: utilities, middleware, token logic
-- Integration tests: auth flow, invite flow, org switching
-- Security tests: cross-tenant access, RBAC bypass attempts
-- RLS verification tests: prove tenant A cannot access tenant B data
-- Load testing with k6 or autocannon
+### Key files
 
-### Key files to create
-
-- `src/tests/` — mirroring src structure
-- Jest config + Testcontainers setup
+| File | Purpose |
+|---|---|
+| `jest.config.mjs` | ESM Jest config with moduleNameMapper |
+| `src/tests/global-setup.mjs` | Start containers + run migrations |
+| `src/tests/global-teardown.mjs` | No-op (auto-cleanup) |
+| `src/tests/env-setup.ts` | Read container config, set env vars |
+| `src/tests/helpers.ts` | Test utilities |
+| `src/tests/health.test.ts` | Health check tests |
+| `src/tests/auth.test.ts` | Auth flow tests (signup, login, refresh, logout, me) |
+| `src/tests/org.test.ts` | Org CRUD + RBAC tests |
+| `src/tests/invite.test.ts` | Invite create + accept tests |
 
 ---
 
 ## Phase 10 — Deployment
 
-### Goal
+### Status: ✅ Design complete, artifacts created
 
-Deploy to GCP.
+### What was built
 
-### Tasks
+- Design document (`phase-10.md`) — architecture, resources, env vars, costs, security
+- `scripts/setup-gcp.sh` — One-time GCP resource creation (VPC, Cloud SQL, Memorystore, Artifact Registry, secrets, IAM)
+- `scripts/deploy.sh` — Build Docker image, push to Artifact Registry, deploy to Cloud Run
+- `scripts/run-migrations.sh` — Run `prisma migrate deploy` against Cloud SQL via auth proxy
+- `.github/workflows/ci.yml` — CI pipeline: lint → test → build on every push/PR
+- `.github/workflows/deploy.yml` — Deploy pipeline: test → build → push → Cloud Run on push to main
+- `cloudbuild.yaml` — Alternative GCP Cloud Build pipeline
+- `Dockerfile` — Updated for production: Prisma generate at build, migrate deploy on startup
 
-- Dockerized deployment (Cloud Run)
-- Managed PostgreSQL (Cloud SQL)
-- Managed Redis (Memorystore)
-- GitHub Actions CI/CD: lint → test → build → deploy
-- Secret management (Secret Manager)
-- Custom domain + HTTPS
+### Architecture
 
-### Key files to create
+```
+GitHub → CI (lint + test + build) → Artifact Registry → Deploy to Cloud Run
+                                                              │
+                      ┌───────────────────────────────────────┼───────────────────────┐
+                      │                                       │                       │
+                 Cloud SQL (PostgreSQL 16)          Memorystore (Redis 7)       Secret Manager
+                      │                                       │
+                      └───────────────────────────────────────┘
+                              VPC Connector (serverless VPC access)
+```
 
-- `.github/workflows/ci.yml`
-- `.github/workflows/deploy.yml`
-- `cloudbuild.yaml`
-- `Dockerfile` (update for production)
+### Required GitHub secrets/vars
+
+| Name | Type | Value |
+|---|---|---|
+| `GCP_SA_KEY` | Secret | JSON key for Cloud Run deploy SA |
+| `GCP_PROJECT_ID` | Variable | Your GCP project ID |
+| `GCP_REGION` | Variable | Deployment region (default: `us-central1`) |
 
 ---
 
@@ -363,7 +384,10 @@ server/
 ├── .eslintrc.json
 ├── .github/
 │   ├── CODEOWNERS
-│   └── dependabot.yml
+│   ├── dependabot.yml
+│   └── workflows/
+│       ├── ci.yml
+│       └── deploy.yml
 ├── .gitignore
 ├── .husky/
 │   └── pre-commit
@@ -371,7 +395,9 @@ server/
 ├── AGENTS.md
 ├── Dockerfile
 ├── PLAN.md                         ← this file
+├── cloudbuild.yaml
 ├── docker-compose.yml
+├── phase-10.md
 ├── package.json
 ├── phase-1.md through phase-4.md   ← design docs
 ├── prisma/

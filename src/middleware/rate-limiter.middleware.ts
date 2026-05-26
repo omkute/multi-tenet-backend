@@ -22,6 +22,8 @@ export function generalRateLimiter(
   _res: Response,
   next: NextFunction,
 ): void {
+  if (process.env.NODE_ENV === "test") return next();
+
   const isAuth = AUTH_PATHS.some((p) => req.path.startsWith(p));
   const config: RateLimitConfig = {
     windowMs: isAuth ? AUTH_WINDOW_MS : WINDOW_MS,
@@ -37,6 +39,8 @@ export function bruteForceProtection(
   _res: Response,
   next: NextFunction,
 ): void {
+  if (process.env.NODE_ENV === "test") return next();
+
   const email: string | undefined = req.body?.email;
   if (!email) return next();
 

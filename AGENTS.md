@@ -77,9 +77,37 @@ src/
 | 6 — Invite System | ✅ Done |
 | 7 — Audit Logging | ✅ Done |
 | 8 — Operational Features | ✅ Done |
-| 9 — Testing Strategy | ⏳ |
-| 10 — Deployment | ⏳ |
+| 9 — Testing Strategy | ✅ Done |
+| 10 — Deployment | ⏳ Design done, artifacts created |
 | 11 — Documentation | ⏳ |
+
+## GCP Deployment
+
+### One-time setup
+```bash
+./scripts/setup-gcp.sh <PROJECT_ID> [REGION]
+```
+
+### Build & deploy
+```bash
+./scripts/deploy.sh <PROJECT_ID> [REGION] [SERVICE_NAME]
+```
+
+### Run migrations
+```bash
+./scripts/run-migrations.sh <PROJECT_ID> [REGION]
+```
+
+### CI/CD
+- `.github/workflows/ci.yml` — Runs lint, test, build on every push
+- `.github/workflows/deploy.yml` — Deploys to Cloud Run on push to `main`
+
+### Required GitHub secrets/vars
+| Name | Type | Value |
+|---|---|---|
+| `GCP_SA_KEY` | Secret | JSON key for Cloud Run deploy SA |
+| `GCP_PROJECT_ID` | Variable | Your GCP project ID |
+| `GCP_REGION` | Variable | Deployment region (default: `us-central1`) |
 
 ## Commands
 
