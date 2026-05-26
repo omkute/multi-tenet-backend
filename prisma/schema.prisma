@@ -1,0 +1,129 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  OWNER
+  ADMIN
+  MEMBER
+}
+
+model User {
+  id           String    @id @default(uuid())
+  email        String    @unique
+  passwordHash String
+  name         String
+  avatarUrl    String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  deletedAt    DateTime?
+
+  memberships Membership[]
+  sessions    Session[]
+  projects    Project[]     @relation("ProjectCreator")
+  invites     Invite[]
+  auditLogs   AuditLog[]
+}
+
+model Organization {
+  id        String    @id @default(uuid())
+  name      String
+  slug      String    @unique
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  memberships Membership[]
+  projects    Project[]
+  invites     Invite[]
+  auditLogs   AuditLog[]
+}
+
+model Membership {
+  id        String    @id @default(uuid())
+  userId    String
+  orgId     String
+  role      Role      @default(MEMBER)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  user         User         @relation(fields: [userId], references: [id])
+  organization Organization @relation(fields: [orgId], references: [id])
+
+  @@unique([userId, orgId])
+  @@index([orgId])
+}
+
+model Project {
+  id          String    @id @default(uuid())
+  name        String
+  description String?
+  orgId       String
+  createdById String
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime?
+
+  organization Organization @relation(fields: [orgId], references: [id])
+  createdBy    User         @relation("ProjectCreator", fields: [createdById], references: [id])
+
+  @@index([orgId])
+}
+
+model Invite {
+  id          String    @id @default(uuid())
+  orgId       String
+  email       String
+  tokenHash   String
+  role        Role      @default(MEMBER)
+  expiresAt   DateTime
+  acceptedAt  DateTime?
+  revokedAt   DateTime?
+  createdById String
+  createdAt   DateTime  @default(now())
+
+  organization Organization @relation(fields: [orgId], references: [id])
+  createdBy    User         @relation(fields: [createdById], references: [id])
+
+  @@index([orgId])
+  @@index([email])
+}
+
+model Session {
+  id               String    @id @default(uuid())
+  userId           String
+  refreshTokenHash String    @unique
+  device           String?
+  ip               String?
+  userAgent        String?
+  expiresAt        DateTime
+  createdAt        DateTime  @default(now())
+  revokedAt        DateTime?
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+}
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  orgId     String?
+  actorId   String?
+  action    String
+  model     String
+  modelId   String
+  data      Json?
+  createdAt DateTime @default(now())
+
+  organization Organization? @relation(fields: [orgId], references: [id])
+  actor        User?         @relation(fields: [actorId], references: [id])
+
+  @@index([orgId])
+  @@index([actorId])
+  @@index([createdAt])
+}

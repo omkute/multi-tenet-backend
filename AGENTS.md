@@ -20,7 +20,7 @@ Client → Express API → Auth Middleware → Tenant Context → RBAC → Servi
 ## Tech Stack
 
 - **Runtime**: Node.js 22, TypeScript, Express 5
-- **Database**: PostgreSQL 16 via Prisma ORM
+- **Database**: PostgreSQL 16 via Prisma ORM (v7, driver adapter: `@prisma/adapter-pg`)
 - **Auth**: JWT (access 15m + refresh stored in DB)
 - **Cache/Rate-Limiting**: Redis 7
 - **Logging**: Pino (structured JSON)
@@ -63,7 +63,7 @@ src/
 | Phase | Status |
 |-------|--------|
 | 1 — Project Foundation | ✅ Done |
-| 2 — Database Design | 🔜 Next |
+| 2 — Database Design | ✅ Done |
 | 3 — Authentication | ⏳ |
 | 4 — Multi-Tenant Isolation | ⏳ |
 | 5 — RBAC Authorization | ⏳ |
@@ -77,12 +77,17 @@ src/
 ## Commands
 
 ```bash
-npm run dev       # Start dev server with hot reload
-npm run build     # Compile TypeScript → dist/
-npm run start     # Run compiled production build
-npm run lint      # ESLint check
-npm run format    # Prettier format
-npm test          # Run Jest tests
+npm run dev        # Start dev server with hot reload
+npm run build      # Compile TypeScript → dist/
+npm run start      # Run compiled production build
+npm run lint       # ESLint check
+npm run format     # Prettier format
+npm test           # Run Jest tests
+npm run db:migrate # Create/apply Prisma migration
+npm run db:deploy  # Apply migrations in production
+npm run db:seed    # Seed database
+npm run db:reset   # Drop all + re-migrate + seed
+npm run db:studio  # Open Prisma Studio (GUI)
 ```
 
 ## Docker

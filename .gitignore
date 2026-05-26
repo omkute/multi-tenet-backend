@@ -6,3 +6,5 @@ dist/
 coverage/
 .tmp/
 phase-1.md
+
+/src/generated/prisma
