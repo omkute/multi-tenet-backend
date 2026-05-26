@@ -1,0 +1,154 @@
+{
+  "info": {
+    "_postman_id": "c379dcfb-4f90-4187-bfc0-a95e19f01752",
+    "name": "Invite API - Membership Flow",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "End-to-end invite membership flow using owner and invitee accounts."
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:3000" },
+    { "key": "ownerAccessToken", "value": "" },
+    { "key": "inviteeAccessToken", "value": "" },
+    { "key": "orgId", "value": "" },
+    { "key": "inviteToken", "value": "" },
+
+    { "key": "ownerName", "value": "Owner User" },
+    { "key": "ownerEmail", "value": "owner.test+1@gmail.com" },
+    { "key": "ownerPassword", "value": "Pass@12345" },
+
+    { "key": "inviteeName", "value": "Invitee User" },
+    { "key": "inviteeEmail", "value": "invitee.test+1@gmail.com" },
+    { "key": "inviteePassword", "value": "Pass@12345" },
+
+    { "key": "orgName", "value": "Invite Flow Org" },
+    { "key": "orgSlug", "value": "invite-flow-org-001" },
+    { "key": "inviteRole", "value": "MEMBER" }
+  ],
+  "item": [
+    {
+      "name": "01 - Owner Signup",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"{{ownerName}}\",\n  \"email\": \"{{ownerEmail}}\",\n  \"password\": \"{{ownerPassword}}\"\n}"
+        },
+        "url": { "raw": "{{baseUrl}}/api/auth/signup", "host": ["{{baseUrl}}"], "path": ["api", "auth", "signup"] }
+      }
+    },
+    {
+      "name": "02 - Owner Login",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"{{ownerEmail}}\",\n  \"password\": \"{{ownerPassword}}\"\n}"
+        },
+        "url": { "raw": "{{baseUrl}}/api/auth/login", "host": ["{{baseUrl}}"], "path": ["api", "auth", "login"] }
+      },
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+        "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+        "var data = pm.response.json();",
+        "if (data && data.accessToken) pm.collectionVariables.set('ownerAccessToken', data.accessToken);"
+      ] } }]
+    },
+    {
+      "name": "03 - Create Org (Owner)",
+      "request": {
+        "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{ownerAccessToken}}", "type": "string" }] },
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": { "mode": "raw", "raw": "{\n  \"name\": \"{{orgName}}\",\n  \"slug\": \"{{orgSlug}}\"\n}" },
+        "url": { "raw": "{{baseUrl}}/api/orgs", "host": ["{{baseUrl}}"], "path": ["api", "orgs"] }
+      },
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+        "pm.test('Status is 201', function () { pm.response.to.have.status(201); });",
+        "var data = pm.response.json();",
+        "if (data && data.organization && data.organization.id) pm.collectionVariables.set('orgId', data.organization.id);"
+      ] } }]
+    },
+    {
+      "name": "04 - Invitee Signup",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"{{inviteeName}}\",\n  \"email\": \"{{inviteeEmail}}\",\n  \"password\": \"{{inviteePassword}}\"\n}"
+        },
+        "url": { "raw": "{{baseUrl}}/api/auth/signup", "host": ["{{baseUrl}}"], "path": ["api", "auth", "signup"] }
+      }
+    },
+    {
+      "name": "05 - Invitee Login",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"{{inviteeEmail}}\",\n  \"password\": \"{{inviteePassword}}\"\n}"
+        },
+        "url": { "raw": "{{baseUrl}}/api/auth/login", "host": ["{{baseUrl}}"], "path": ["api", "auth", "login"] }
+      },
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+        "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+        "var data = pm.response.json();",
+        "if (data && data.accessToken) pm.collectionVariables.set('inviteeAccessToken', data.accessToken);"
+      ] } }]
+    },
+    {
+      "name": "06 - Create Invite (Owner)",
+      "request": {
+        "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{ownerAccessToken}}", "type": "string" }] },
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "X-Org-Id", "value": "{{orgId}}" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"{{inviteeEmail}}\",\n  \"role\": \"{{inviteRole}}\"\n}"
+        },
+        "url": { "raw": "{{baseUrl}}/api/orgs/{{orgId}}/invites", "host": ["{{baseUrl}}"], "path": ["api", "orgs", "{{orgId}}", "invites"] }
+      },
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+        "pm.test('Status is 201', function () { pm.response.to.have.status(201); });",
+        "var data = pm.response.json();",
+        "if (data && data.token) pm.collectionVariables.set('inviteToken', data.token);"
+      ] } }]
+    },
+    {
+      "name": "07 - Accept Invite (Invitee)",
+      "request": {
+        "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{inviteeAccessToken}}", "type": "string" }] },
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": { "mode": "raw", "raw": "{\n  \"token\": \"{{inviteToken}}\"\n}" },
+        "url": { "raw": "{{baseUrl}}/api/invites/accept", "host": ["{{baseUrl}}"], "path": ["api", "invites", "accept"] }
+      },
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+        "pm.test('Status is 201', function () { pm.response.to.have.status(201); });"
+      ] } }]
+    },
+    {
+      "name": "08 - List Members (Owner verify invitee)",
+      "request": {
+        "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{ownerAccessToken}}", "type": "string" }] },
+        "method": "GET",
+        "header": [{ "key": "X-Org-Id", "value": "{{orgId}}" }],
+        "url": { "raw": "{{baseUrl}}/api/orgs/{{orgId}}/members", "host": ["{{baseUrl}}"], "path": ["api", "orgs", "{{orgId}}", "members"] }
+      },
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+        "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+        "var data = pm.response.json();",
+        "pm.test('Invitee appears in members', function () {",
+        "  var list = (data && data.members) || [];",
+        "  var found = list.some(function(m){ return m && m.user && m.user.email === pm.collectionVariables.get('inviteeEmail'); });",
+        "  pm.expect(found).to.eql(true);",
+        "});"
+      ] } }]
+    }
+  ]
+}

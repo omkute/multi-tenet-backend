@@ -1,5 +1,6 @@
 import type { Request, Response, NextFunction } from "express";
 import { verifyAccessToken } from "@/utils/jwt.js";
+import { userStorage } from "@/lib/user-context.js";
 
 export const requireAuth = (
   req: Request,
@@ -16,7 +17,7 @@ export const requireAuth = (
   try {
     const payload = verifyAccessToken(token);
     req.user = { userId: payload.sub, sessionId: payload.sessionId };
-    next();
+    userStorage.run({ userId: payload.sub }, () => next());
   } catch {
     _res.status(401).json({ error: "Invalid or expired token" });
   }

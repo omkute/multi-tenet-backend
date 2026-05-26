@@ -1,6 +1,6 @@
 import bcrypt from "bcryptjs";
 import { Prisma } from "@prisma/client";
-import { prisma } from "@/lib/prisma.js";
+import { prismaWithAudit as prisma } from "@/lib/prisma.js";
 import {
   signAccessToken,
   generateRefreshToken,

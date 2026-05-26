@@ -1,5 +1,9 @@
 # Project Context — Multi-Tenant SaaS Backend
 
+> For comprehensive project context, read `PLAN.md` — it contains all phases, file tree, architecture decisions, and patterns.
+
+---
+
 ## Overview
 
 Production-grade multi-tenant backend demonstrating:
@@ -48,6 +52,9 @@ src/
 - All imports use `.js` extension (required by `verbatimModuleSyntax`)
 - Path alias `@/` maps to `src/`
 - No `repositories/` layer — Prisma IS the repository
+- Tenant isolation via PostgreSQL RLS (defense-in-depth) + explicit `orgId` filters
+- Tenant context set via `X-Org-Id` header, validated by `requireOrg` middleware
+- Use `withOrg()` helper for RLS-wrapped transactions; use `getOrgId()` for filters
 - Services are pure business logic, no `req`/`res` access
 - Controllers parse input, call service, format response
 
@@ -64,11 +71,11 @@ src/
 |-------|--------|
 | 1 — Project Foundation | ✅ Done |
 | 2 — Database Design | ✅ Done |
-| 3 — Authentication | ⏳ |
-| 4 — Multi-Tenant Isolation | ⏳ |
-| 5 — RBAC Authorization | ⏳ |
-| 6 — Invite System | ⏳ |
-| 7 — Audit Logging | ⏳ |
+| 3 — Authentication | ✅ Done |
+| 4 — Multi-Tenant Isolation | ✅ Done |
+| 5 — RBAC Authorization | ✅ Done |
+| 6 — Invite System | ✅ Done |
+| 7 — Audit Logging | ✅ Done |
 | 8 — Operational Features | ⏳ |
 | 9 — Testing Strategy | ⏳ |
 | 10 — Deployment | ⏳ |

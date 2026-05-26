@@ -1,0 +1,293 @@
+{
+  "info": {
+    "_postman_id": "d15dbe74-6461-4832-ab1f-79b73f4a89d6",
+    "name": "Org API - Multi Tenant Backend",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "Organization endpoints with automatic auth and orgId variable capture."
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000"
+    },
+    {
+      "key": "accessToken",
+      "value": ""
+    },
+    {
+      "key": "orgId",
+      "value": ""
+    },
+    {
+      "key": "sampleName",
+      "value": "Om Kute"
+    },
+    {
+      "key": "sampleEmail",
+      "value": "om.test+1@gmail.com"
+    },
+    {
+      "key": "samplePassword",
+      "value": "Pass@12345"
+    },
+    {
+      "key": "orgName",
+      "value": "Om Workspace"
+    },
+    {
+      "key": "orgSlug",
+      "value": "om-workspace-001"
+    },
+    {
+      "key": "updatedOrgName",
+      "value": "Om Workspace Updated"
+    },
+    {
+      "key": "updatedOrgSlug",
+      "value": "om-workspace-001-upd"
+    }
+  ],
+  "item": [
+    {
+      "name": "00 - Login (capture accessToken)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"{{sampleEmail}}\",\n  \"password\": \"{{samplePassword}}\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/auth/login",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "auth", "login"]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+              "var data = pm.response.json();",
+              "if (data && data.accessToken) {",
+              "  pm.collectionVariables.set('accessToken', data.accessToken);",
+              "}"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "01 - List My Orgs",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{accessToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/orgs",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "orgs"]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+              "var data = pm.response.json();",
+              "if (data && data.organizations && data.organizations.length > 0 && data.organizations[0].id) {",
+              "  pm.collectionVariables.set('orgId', data.organizations[0].id);",
+              "}"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "02 - Create Org",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{accessToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"{{orgName}}\",\n  \"slug\": \"{{orgSlug}}\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/orgs",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "orgs"]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status is 201', function () { pm.response.to.have.status(201); });",
+              "var data = pm.response.json();",
+              "if (data && data.organization && data.organization.id) {",
+              "  pm.collectionVariables.set('orgId', data.organization.id);",
+              "}"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "03 - Get Org By Id",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{accessToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [
+          {
+            "key": "X-Org-Id",
+            "value": "{{orgId}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/orgs/{{orgId}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "orgs", "{{orgId}}"]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status is 200', function () { pm.response.to.have.status(200); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "04 - Update Org",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{accessToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "PATCH",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "X-Org-Id",
+            "value": "{{orgId}}"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"{{updatedOrgName}}\",\n  \"slug\": \"{{updatedOrgSlug}}\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/orgs/{{orgId}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "orgs", "{{orgId}}"]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status is 200', function () { pm.response.to.have.status(200); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "05 - List Org Members",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{accessToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [
+          {
+            "key": "X-Org-Id",
+            "value": "{{orgId}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/orgs/{{orgId}}/members",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "orgs", "{{orgId}}", "members"]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status is 200', function () { pm.response.to.have.status(200); });"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -1,6 +1,7 @@
 import type { Request, Response } from "express";
 import * as authService from "../services/auth.service.js";
 import { env } from "../config/env.js";
+import { bruteForceProtection, recordFailedAttempt, clearBruteForce } from "../middleware/rate-limiter.middleware.js";
 
 const REFRESH_COOKIE_OPTIONS = {
   httpOnly: true,
@@ -12,24 +13,35 @@ const REFRESH_COOKIE_OPTIONS = {
 
 export const signup = async (req: Request, res: Response): Promise<void> => {
   const { email, password, name } = req.body;
-  const result = await authService.signup(email, password, name);
+  try {
+    const result = await authService.signup(email, password, name);
 
-  res.cookie("refreshToken", result.refreshToken, REFRESH_COOKIE_OPTIONS);
-  res.status(201).json({
-    user: result.user,
-    accessToken: result.accessToken,
-  });
+    res.cookie("refreshToken", result.refreshToken, REFRESH_COOKIE_OPTIONS);
+    res.status(201).json({
+      user: result.user,
+      accessToken: result.accessToken,
+    });
+  } catch (err) {
+    if (email) await recordFailedAttempt(email);
+    throw err;
+  }
 };
 
 export const login = async (req: Request, res: Response): Promise<void> => {
   const { email, password } = req.body;
-  const result = await authService.login(email, password);
+  try {
+    const result = await authService.login(email, password);
+    if (email) await clearBruteForce(email);
 
-  res.cookie("refreshToken", result.refreshToken, REFRESH_COOKIE_OPTIONS);
-  res.json({
-    user: result.user,
-    accessToken: result.accessToken,
-  });
+    res.cookie("refreshToken", result.refreshToken, REFRESH_COOKIE_OPTIONS);
+    res.json({
+      user: result.user,
+      accessToken: result.accessToken,
+    });
+  } catch (err) {
+    if (email) await recordFailedAttempt(email);
+    throw err;
+  }
 };
 
 export const refresh = async (req: Request, res: Response): Promise<void> => {
