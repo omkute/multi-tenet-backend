@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { beforeAll, afterAll, describe, expect, it } from "@jest/globals";
 import request from "supertest";
 import type { Application } from "express";
@@ -18,7 +19,11 @@ describe("POST /api/auth/signup", () => {
   it("creates a new user and returns tokens", async () => {
     const res = await request(app)
       .post("/api/auth/signup")
-      .send({ email: "auth-test@test.com", password: "testpass123", name: "Auth Test" })
+      .send({
+        email: "auth-test@test.com",
+        password: "testpass123",
+        name: "Auth Test",
+      })
       .expect(201);
 
     expect(res.body.user).toMatchObject({
@@ -33,7 +38,11 @@ describe("POST /api/auth/signup", () => {
   it("rejects duplicate email", async () => {
     const res = await request(app)
       .post("/api/auth/signup")
-      .send({ email: "auth-test@test.com", password: "testpass123", name: "Auth Test" })
+      .send({
+        email: "auth-test@test.com",
+        password: "testpass123",
+        name: "Auth Test",
+      })
       .expect(409);
 
     expect(res.body.error).toBe("Email already in use");
@@ -93,9 +102,7 @@ describe("POST /api/auth/refresh", () => {
   });
 
   it("rejects missing refresh token", async () => {
-    const res = await request(app)
-      .post("/api/auth/refresh")
-      .expect(401);
+    const res = await request(app).post("/api/auth/refresh").expect(401);
 
     expect(res.body.error).toBe("No refresh token");
   });
@@ -114,9 +121,7 @@ describe("POST /api/auth/logout", () => {
   });
 
   it("rejects unauthenticated request", async () => {
-    const res = await request(app)
-      .post("/api/auth/logout")
-      .expect(401);
+    const res = await request(app).post("/api/auth/logout").expect(401);
 
     expect(res.body.error).toBe("Missing or invalid authorization header");
   });
@@ -135,9 +140,7 @@ describe("GET /api/auth/me", () => {
   });
 
   it("rejects unauthenticated request", async () => {
-    const res = await request(app)
-      .get("/api/auth/me")
-      .expect(401);
+    const res = await request(app).get("/api/auth/me").expect(401);
   });
 });
 

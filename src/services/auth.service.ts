@@ -97,7 +97,6 @@ export async function login(
   }
 
   const { raw: refreshToken, hash: refreshTokenHash } = generateRefreshToken();
-  console.log("refreshToken");
   const session = await prisma.session.create({
     data: {
       userId: user.id,

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { beforeAll, afterAll, describe, expect, it } from "@jest/globals";
 import request from "supertest";
 import type { Application } from "express";
@@ -11,7 +12,12 @@ beforeAll(async () => {
   const mod = await import("@/app.js");
   app = mod.default;
 
-  const user = await signupUser(app, "org-admin@test.com", "pass123", "Org Admin");
+  const user = await signupUser(
+    app,
+    "org-admin@test.com",
+    "pass123",
+    "Org Admin",
+  );
   adminToken = user.accessToken;
 
   const org = await createOrg(app, adminToken, "Test Org", "test-org");
@@ -34,8 +40,12 @@ describe("POST /api/orgs", () => {
 
     // Cleanup second org
     const { prisma } = await import("@/lib/prisma.js");
-    await prisma.membership.deleteMany({ where: { orgId: res.body.organization.id } });
-    await prisma.organization.delete({ where: { id: res.body.organization.id } });
+    await prisma.membership.deleteMany({
+      where: { orgId: res.body.organization.id },
+    });
+    await prisma.organization.delete({
+      where: { id: res.body.organization.id },
+    });
   });
 
   it("rejects duplicate slug", async () => {
@@ -120,7 +130,12 @@ describe("GET /api/orgs/:id/members", () => {
 describe("RBAC enforcement", () => {
   it("allows ADMIN to create invites (tested in invite tests)", async () => {
     // Create a member user
-    const member = await signupUser(app, "rbac-member@test.com", "pass123", "Member");
+    const member = await signupUser(
+      app,
+      "rbac-member@test.com",
+      "pass123",
+      "Member",
+    );
     const { prisma } = await import("@/lib/prisma.js");
 
     // Admin adds member via direct DB (since invites exist)
