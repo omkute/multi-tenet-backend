@@ -7,6 +7,7 @@ import {
   hashRefreshToken,
 } from "@/utils/jwt.js";
 import { AppError } from "@/utils/app-error.js";
+import { logger } from "@/lib/logger.js";
 
 const BCRYPT_COST = 12;
 const REFRESH_EXPIRY_DAYS = 7;
@@ -66,8 +67,10 @@ export async function signup(
       error instanceof Prisma.PrismaClientKnownRequestError &&
       error.code === "P2002"
     ) {
+      logger.warn({ email: normalizedEmail }, "Duplicate email attempt");
       throw new AppError("Email already in use", 409);
     }
+    logger.error({ err: error }, "Unexpected error during signup");
     throw error;
   }
 }
