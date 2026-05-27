@@ -3,7 +3,7 @@ WORKDIR /app
 COPY package*.json ./
 
 # Install ALL dependencies (including devDependencies for build)
-RUN npm ci
+RUN npm install
 
 FROM deps AS builder
 COPY tsconfig.json ./
@@ -20,7 +20,7 @@ ENV NODE_ENV=production
 
 # Copy production dependencies
 COPY package*.json ./
-RUN npm ci --omit=dev && npm cache clean --force
+RUN npm install --ignore-scripts --omit=dev && npm cache clean --force
 
 # Copy built output
 COPY --from=builder /app/dist ./dist
